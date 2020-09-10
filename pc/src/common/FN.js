@@ -99,5 +99,5 @@ export default {
   GET_MODEL,
   ROUTE_PUSH,
   FLOW,
-  toast: NUI.$toast
+  toast: window.alert
 }
