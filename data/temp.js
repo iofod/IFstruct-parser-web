@@ -1,8 +1,25 @@
 const { data } = require('./data')
 const { HSS } = data.CTT.T
 let { table: TB, Fx: FX, MF, util: UT } = data.Models
+let { mainPage } = data.Config.setting
 
 function replaceDot(str) {
+	/*
+	let match = str.match(/\".*?\"\:/gm) // 替换属性的 ""
+
+	match.map((v) => v.substr(1, v.length - 3)).forEach((v, i) => {
+		// if (!match[i].includes('-') && !match[i].match(/^\d/)) {
+		//   str = str.replace(match[i], v + ':')
+		// }
+		// console.log(match[i].substr(1, 1))
+		if (match[i].includes('-')) {
+		} else if (match[i].substr(1, 1).match(/^\d/)) {
+		} else {
+			str = str.replace(match[i], v + ':')
+		}
+	})
+	*/
+
 	// prettier会自动格式化，所以这里不用
 	return str
 
@@ -82,7 +99,7 @@ const expStringify = (params, hid) => {
 	for (let attr in params) {
 		let value = params[attr]
 
-		if (typeof value == 'string' && value != '$current' && value.slice(0, 1) === '$' && !parseExclude.includes(value)) {
+		if (typeof value == 'string' && value != '$current' && value.slice(0, 1) === '$' && parseExclude.filter(v => value.includes(v)).length<1) {
 			console.log('now parse.....', value)
 			params[attr] = `__R__FN.parseModelStr('${value}', e.hid)__R__`
 		}
@@ -101,7 +118,7 @@ function getExec(fn, params, param, hid) {
 	switch (fn) {
 		case 'function':
 			if (param) {
-				let { key, dir } = FX[param]
+				let { key, dir = '' } = FX[param]
 				let road = dir.split('/').join('.')
 
 				fnexec = `FX${road}.${key}`
@@ -160,6 +177,7 @@ function getExec(fn, params, param, hid) {
 
 	// 先进行表达式的替换
 	fnargs = fnargs.replace(/: "(.*?)\$response(.*?)"/g, ': $1response$2')
+	
 	// 对中间过程中的 res 进行全局替换
 	fnargs = fnargs.replace(/"\$response"/g, 'response')
 
@@ -173,7 +191,12 @@ function genExp(exp, hid) {
 	let expList = exp.match(/\$\w+(-\w+)?(<.+?>)?/g) || []
 
 	expList.forEach((mds) => {
-		exp = exp.replace(new RegExp('\\' + mds, 'gm'), `FN.parseModelStr('${mds}', e.hid)`)
+		// 表达式里的 $response 则直接使用变量
+		if (mds == '$response') {
+			exp = exp.replace(new RegExp('\\' + mds, 'gm'), `${mds.substr(1)}`)
+		} else {
+			exp = exp.replace(new RegExp('\\' + mds, 'gm'), `FN.parseModelStr('${mds}', e.hid)`)
+		}
 	})
 
 	return exp
@@ -245,8 +268,6 @@ function genActionList(hid, actions, list = []) {
 
 			if (fn == 'getModel') {
 				let fragment = `await ` + fnexec + `(` + fnargs + `)`
-				
-
 				let nextAction = actionArr[I + 1]
 				// 下一步动作是 function/service则需要写入 e.context
 				if (nextAction) {
@@ -269,7 +290,6 @@ function genActionList(hid, actions, list = []) {
 			} else {
 				list.push(`await ` + fnexec + `(` + fnargs + `)`)
 			}
-
 		}
 	})
 	return list
@@ -281,7 +301,6 @@ let CE_list = [] // 处理非原生事件
 
 // modelchange 放到 created 里
 // routechange 放到 level watch里 or FN.PS Fx_change_router
-
 function genEventContent(hid, events, jumpCE = true) {
 	let eventMarks = []
 	let eventMethods = []
@@ -351,6 +370,11 @@ function genEventContent(hid, events, jumpCE = true) {
 	return {
 		eventMarks,
 		eventMethods
+		/**
+     * eventMarks: [@click.native="click_xccc", @touchstart.native="touchstart_xxx"]
+     * eventMethods: [async xxx() {}, async xxx() {}]
+     * 
+     */
 	}
 }
 
@@ -378,6 +402,8 @@ export default {
 }
 
 exports.genRouteContent = (routes) => {
+
+
 	return `
 import Vue from 'vue'
 import Router from 'vue-router'
@@ -386,7 +412,8 @@ Vue.use(Router)
 
 export default new Router({
   routes: [
-    ${routes.join(',\n\t\t')}
+		${routes.join(',\n\t\t')},
+    { path: '/', redirect: '/${mainPage}' }
   ]
 })`
 }
@@ -604,7 +631,8 @@ exports.genViewContent = (lid, tree) => {
 
 			str += `
 			FN.PS.unsubscribe(FN.PS_ID.${hid}_${event})
-			FN.PS_ID.${hid}_${event} = ${subscriber}('${sub_name}', this.EV(this.clone, ${fn_body}))`
+			FN.PS_ID.${hid}_${event} = ${subscriber}('${sub_name}', this.EV(this.clone, ${fn_body}, '${hid}'))`
+			// 在生产模式下函数名会去掉，因此这里需要将 hid 加进去
 
 			unstr += ``
 		})

@@ -9,6 +9,7 @@ import IFphoto from './IFphoto'
 import IFtext from './IFtext'
 
 import IFinput from './IFinput'
+import IFvideo from './IFvideo'
 
 Vue.component('IFcontainer', IFcontainer)
 Vue.component('IFlevel', IFlevel)
@@ -19,3 +20,4 @@ Vue.component('IFphoto', IFphoto)
 Vue.component('IFtext', IFtext)
 
 Vue.component('IFinput', IFinput)
+Vue.component('IFvideo', IFvideo)

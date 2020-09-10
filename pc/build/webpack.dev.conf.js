@@ -12,8 +12,7 @@ const devWebpackConfig = merge(baseWebpackConfig, {
 			warnings: true,
 			errors: true
 		},
-		host: '192.168.88.32',
-		allowedHosts: ['testdemo.qk123.cn', '192.168.1.101', '192.168.88.32', '127.0.0.1'],
+		host: '127.0.0.12',
 		quiet: true, // necessary for FriendlyErrorsPlugin
 		proxy: {
 			'/api': {
