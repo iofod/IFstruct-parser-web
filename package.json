@@ -10,6 +10,10 @@
     "universal-diff": "^2.0.2"
   },
   "scripts": {
-    "gen:pc": "cd ./data/ && node gen.js pc"
+    "gen:pc": "cd ./data/ && node gen.js pc",
+    "gen:mobile": "cd ./data/ && node gen.js phone"
+  },
+  "dependencies": {
+    "download": "^8.0.0"
   }
 }

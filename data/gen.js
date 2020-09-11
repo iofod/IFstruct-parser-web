@@ -4,6 +4,7 @@ let { data } = require('./data')
 const { genPageContent, genRouteContent, genStoreContent, genViewContent, genScriptDeps } = require('./temp')
 const { genRootTreeStyle, genTreeStyle, genSingleStyleContent } = require('./buildStyle')
 const prettier = require("prettier")
+const { localizModel, downloadAssets } = require('./downloadAssets')
 
 const parser = {
   'js': 'babel',
@@ -20,6 +21,7 @@ let { pages, HSS } = CTT.T
 let { table, Fx, MF, util } = Models
 let unit
 let getPath
+let getAssetsPath
 
 const mkdir = road => {
   return new Promise(done => {
@@ -74,6 +76,8 @@ function transformSets(hid, sets) {
       value, use: subscribe
     }
   }
+
+  localizModel(target.model)
 
   if (layout) {
     target.layout = getLayout(layout)
@@ -294,10 +298,12 @@ function setGenType(type) {
     case 'phone':
       unit = 'rem'
       getPath = road => path.resolve('../mobile/src/' + road)
+      getAssetsPath = road => path.resolve('../mobile/public/assets/' + road)
       break
     case 'pc':
       unit = 'px'
       getPath = road => path.resolve('../pc/src/' + road)
+      getAssetsPath = road => path.resolve('../pc/public/assets/' + road)
       break
   
     default:
@@ -321,6 +327,8 @@ async function main() {
   genStore()
   genStyle()
   genScript()
+
+  await downloadAssets(getAssetsPath)
   
   console.timeEnd('gen')
   console.log('gen Done!')

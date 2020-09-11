@@ -1,3 +1,5 @@
+const { localizImage } = require('./downloadAssets')
+
 const flexMap = {
   flex: 'fx',
   'flex-basis': 'fxb',
@@ -314,6 +316,7 @@ function genStyle(ctree, type = 'px', K = 1) {
       delete style.V
 
       px2any(style, type)
+      localizImage(style)
 
       for (let attr in style) {
         let hash = hump2Line(attr) + ': ' + style[attr]
